@@ -3,7 +3,7 @@ import errno
 import json
 import socketserver
 
-from client_server import helpers, exceptions
+from client_server import api, helpers, exceptions
 from client_server.logger import logger
 
 class DARequestHandler(socketserver.BaseRequestHandler):
@@ -23,8 +23,8 @@ class DARequestHandler(socketserver.BaseRequestHandler):
         return self.request.recv(1024).decode('utf-8').strip()
 
     def send(self, message):
-        '''Send a message to the client. Message is a JSON entity'''
-        self.request.send((message + '\n').encode('utf-8'))
+        '''Send a message to the client'''
+        self.request.send(message.encode('utf-8'))
 
     def handle(self):
         logger.info('Incoming connection')
@@ -47,7 +47,7 @@ class DARequestHandler(socketserver.BaseRequestHandler):
         # Other exceptions
         except Exception as e:
             try:
-                self.send_error('Unexpected server error')
+                self.send(api.APIFormatter.format_error('Unexpected server error'))
             except:
                 pass
             raise

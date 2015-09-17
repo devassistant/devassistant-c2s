@@ -2,7 +2,7 @@
 import json
 import os
 
-from client_server import exceptions, settings
+from client_server import api, exceptions, settings
 from client_server.logger import logger
 
 def prepare_socket(path):
@@ -11,7 +11,6 @@ def prepare_socket(path):
     except OSError as e:
         if os.path.exists(path):
             raise
-
 
 class QueryProcessor(object):
     '''Process a query. The constructor takes a DARequestHandler instance so
@@ -23,12 +22,11 @@ class QueryProcessor(object):
 
     def send_json(self, dictionary):
         '''Send a JSON-formatted message'''
-        dictionary['version'] = settings.API_VERSION
-        self.handler.send(json.dumps(dictionary))
+        self.handler.send(api.APIFormatter.format_json(dictionary))
 
     def send_error(self, reason):
         '''Send an API-compliant error message with the specified reason'''
-        self.send_json({'error': {'reason': reason}})
+        self.handler.send(api.APIFormatter.format_error(reason))
 
     def process_run(self, args):
         '''Run an assistant'''
@@ -40,12 +38,25 @@ class QueryProcessor(object):
     def process_tree(self, args):
         '''Get a tree of runnables'''
         logger.info('Serving a tree request')
-        self.send_json({'foo': {'bar': 'baz'}})
+        runnables = api.DevAssistantAdaptor.get_top_runnables()
+        tree = [api.APISerializer.serialize_runnable(runnable,
+                                                     '/',
+                                                     get_icons = args.get('icons', False),
+                                                     get_arguments = args.get('arguments', False),
+                                                     ) for runnable in runnables]
+        self.send_json({'tree': tree})
 
     def process_detail(self, args):
         '''Get a detail of a runnable'''
-        logger.info('Serving a tree request')
-        self.send_json({'foo': {'baz': 'qux'}})
+        logger.info('Serving a detail request')
+        path = args['path']
+        runnable = api.DevAssistantAdaptor.get_runnable_by_path(args['path'])
+        detail = api.APISerializer.serialize_runnable(runnable,
+                                                      path[:path.rfind('/')],
+                                                      get_icons=args.get('icons', False),
+                                                      get_arguments=args.get('arguments', False),
+                                                      names_only=True)
+        self.send_json({"detail": detail})
 
     def process_query(self, data):
         try:
@@ -65,5 +76,8 @@ class QueryProcessor(object):
         except KeyError as e:
             logger.info('Request not valid DA API call: "{data}" ({e}) '.format(data=data, e=e))
             self.send_error('Request not valid API call')
+        except exceptions.ProcessingError as e:
+            logger.info('Error processing request: "{data}" ({e}) '.format(data=data, e=e))
+            self.send_error('Error processing request: ' + str(e))
 
 
