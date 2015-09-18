@@ -54,7 +54,11 @@ class APISerializer(object):
         if names_only:
             rdict['children'] = [c.name for c in children]
         else:
-            rdict['children'] = [cls.serialize_runnable(c, rdict['path'] + '/') for c in children]
+            rdict['children'] = [cls.serialize_runnable(c,
+                                                        rdict['path'] + '/',
+                                                        get_icons=get_icons,
+                                                        get_arguments=get_arguments)
+                                 for c in children]
         return rdict
 
     @classmethod
@@ -100,7 +104,3 @@ class DevAssistantAdaptor(object):
         return [a for a in actions.keys() if not a.hidden] + \
                 devassistant.bin.TopAssistant().get_subassistants()
 
-
-    @classmethod
-    def run_runnable(cls, processor, path, args):
-        

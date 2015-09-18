@@ -22,7 +22,9 @@ class QueryProcessor(object):
 
     def send_json(self, dictionary):
         '''Send a JSON-formatted message'''
-        self.handler.send(api.APIFormatter.format_json(dictionary))
+        msg = api.APIFormatter.format_json(dictionary)
+        print(len(msg))
+        self.handler.send(msg)
 
     def send_error(self, reason):
         '''Send an API-compliant error message with the specified reason'''
