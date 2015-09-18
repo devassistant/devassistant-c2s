@@ -63,7 +63,7 @@ class ConsoleClient(object):
             print('Wrong reply: ' + reply)
 
 def get_argument_parser(tree):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='')
     subparsers = parser.add_subparsers()
     for runnable in tree:
         add_parser_recursive(subparsers, runnable)
@@ -73,7 +73,10 @@ def add_parser_recursive(parsers, runnable):
     parser = parsers.add_parser(name=runnable['name'], description=runnable['description'])
     subparsers = parser.add_subparsers()
     for arg in runnable.get('arguments', []):
-        parser.add_argument(*arg['flags'], nargs=arg.get('nargs'), help=arg.get('help'))
+        kwargs = {k:v for k,v in arg['kwargs'].items() if k in ['help', 'nargs', 'action', 'dest', 'const']}
+        if isinstance(kwargs.get('action'), list): # DA allows a list [default_iff_used, value]
+            del(kwargs['action'])
+        parser.add_argument(*arg['flags'], **kwargs)
     for child in runnable['children']:
         add_parser_recursive(subparsers, child)
 
