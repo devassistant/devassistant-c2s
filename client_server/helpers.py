@@ -1,6 +1,7 @@
 
 import json
 import os
+import uuid
 
 from client_server import api, exceptions, settings
 from client_server.logger import logger
@@ -33,7 +34,7 @@ class QueryProcessor(object):
     def process_run(self, args):
         '''Run an assistant'''
         logger.info('Serving a run request')
-        run_id = uuid.uuid4().replace('-', '')
+        run_id = str(uuid.uuid4()).replace('-', '')
         self.send_json({'run': {'id': run_id}})
         self.send_json({'finished': {'id': run_id, 'status': 'ok'}})
 
