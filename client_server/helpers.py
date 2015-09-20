@@ -22,14 +22,19 @@ class QueryProcessor(object):
         self.handler = handler
 
     def send_json(self, dictionary):
-        '''Send a JSON-formatted message'''
+        '''JSON-format and send a message'''
         msg = api.APIFormatter.format_json(dictionary)
         print(len(msg))
         self.handler.send(msg)
 
-    def send_error(self, reason):
+    def send(self, msg):
+        '''Send already JSON-formatted message'''
+        print(len(msg))
+        self.handler.send(msg)
+
+    def send_error(self, reason, run_id=''):
         '''Send an API-compliant error message with the specified reason'''
-        self.handler.send(api.APIFormatter.format_error(reason))
+        self.handler.send(api.APIFormatter.format_error(reason, run_id))
 
     def get_answer(self):
         '''Recieve an answer from the client'''
@@ -62,14 +67,14 @@ class QueryProcessor(object):
 
         try:
             self.set_dialoghelper_contex(run_id)  # TODO: solve this in some less smelly way
-            self.send_json({'run': {'id': run_id}})
+            self.send(api.APIFormatter.format_run_ack(run_id))
             dalogger.handlers = []
             dalogger.addHandler(JSONHandler(self, run_id))
             dalogger.setLevel(args.get('loglevel', "INFO").upper())
             to_run.run()
-            self.send_json({'finished': {'id': run_id, 'status': 'ok'}})
+            self.send(api.APIFormatter.format_run_finished(run_id))
         except BaseException as e:
-            raise exceptions.ProcessingError(str(e))
+            raise exceptions.ProcessingError(str(e), run_id=run_id)
         finally:
             dalogger.handlers = []
             self.clean_dialoghelper()
@@ -117,6 +122,10 @@ class QueryProcessor(object):
             self.send_error('Request not valid API call')
         except exceptions.ProcessingError as e:
             logger.info('Error processing request: "{data}" ({e}) '.format(data=data, e=e))
-            self.send_error('Error processing request: ' + str(e))
+            try:
+                run_id = e.run_id
+            except AttributeError:
+                run_id = ''
+            self.send_error('Error processing request: ' + str(e), run_id)
 
 

@@ -25,8 +25,11 @@ class APIFormatter(object):
         return cls.format_message(json.dumps(dictionary, sort_keys=True))
 
     @classmethod
-    def format_error(cls, reason):
-        return cls.format_json({'error': {'reason': str(reason)}})
+    def format_error(cls, reason, run_id=''):
+        error = {'error': {'reason': str(reason)}}
+        if run_id:
+            error['error']['id'] = run_id
+        return cls.format_json(error)
 
     @classmethod
     def format_run_ack(cls, run_id):
@@ -34,7 +37,7 @@ class APIFormatter(object):
 
     @classmethod
     def format_run_finished(cls, run_id):
-        raise NotImplementedError
+        return cls.format_json({'finished': {'id': run_id, 'status': 'ok'}})
 
 
 class APISerializer(object):
@@ -66,12 +69,8 @@ class APISerializer(object):
         return rdict
 
     @classmethod
-    def serialize_tree_of_runnables(cls, tree):
-        raise NotImplementedError
-
-    @classmethod
     def serialize_log(cls, message, level, run_id):
-        raise NotImplementedError
+        return {"log": {"level": level, "message": message, "id": run_id}}
 
     @classmethod
     def serialize_icon(cls, assistant, variant):
@@ -123,9 +122,7 @@ class DevAssistantAdaptor(object):
 
         for segment in path.split('/')[1:]:
             found = False
-            print('segment: {}'.format(segment))
             for c in candidates:
-                print('candidate: {}'.format(c.name))
                 if c.name == segment:
                     found = True
                     candidates = cls.get_children(c)

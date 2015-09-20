@@ -1,5 +1,6 @@
-
 import logging
+
+from client_server import api
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
@@ -23,7 +24,9 @@ class JSONHandler(logging.Handler):
         """
         Mapping the log record into a dict to send
         """
-        return {"log": {"level": record.levelname, "message": record.msg, "id": self.run_id}}
+        return api.APISerializer.serialize_log(level=record.levelname,
+                                               message=record.msg,
+                                               run_id=self.run_id)
 
     def emit(self, record):
         """
