@@ -3,31 +3,15 @@ import json
 from devassistant.command_helpers import DialogHelper
 
 
-class JSONDialogHelperMetaClass(type):
-    def __copy__(self, memo):
-        return self
-
-    def __deepcopy__(self, memo):
-        return self
-
-
 @DialogHelper.register_helper
 class JSONDialogHelper(object):
-    __metaclass__ = JSONDialogHelperMetaClass
-
     shortname = 'json'
     yes_list = ['y', 'yes']
     yesno_list = yes_list + ['n', 'no']
 
     # TODO: solve this in some less smelly way
-    handler = None
+    comm = None
     run_id = None
-
-    def __copy__(self, memo):
-        return self
-
-    def __deepcopy__(self, memo):
-        return self
 
     @classmethod
     def is_available(cls):
@@ -42,9 +26,10 @@ class JSONDialogHelper(object):
         prompt += ' [y/n]'
         while True:
             choice = cls.ask_for_input_with_prompt(prompt, message=message, **options)
+            # PROBLEM: choice is a generator? blow up here
             choice = choice.lower()
             if choice not in cls.yesno_list:
-                cls.handler.send_error('You have to choose one of y/n.')
+                cls.comm.send_error('You have to choose one of y/n.')
             else:
                 return choice in cls.yes_list
 
@@ -55,7 +40,7 @@ class JSONDialogHelper(object):
             choice = cls.ask_for_input_with_prompt(prompt, **options)
             choice = choice.lower()
             if choice not in cls.yesno_list + ['s', 'show']:
-                cls.handler.send_error('You have to choose one of y/n/s.')
+                cls.comm.send_error('You have to choose one of y/n/s.')
             else:
                 if choice in cls.yesno_list:
                     return choice in cls.yes_list
@@ -70,18 +55,18 @@ class JSONDialogHelper(object):
         msg = options.get('message', None)
         if msg:
             question['message'] = msg
-        cls.handler.send_message({'question': question})
+        cls.comm.send_json({'question': question})
 
         while True:
             try:
-                reply = yield from cls.handler.get_answer()
+                reply = yield from cls.comm.get_answer()
                 if reply['answer']['id'] != cls.run_id:
                     raise(Exception('Invalid id'))
                 inp = reply['answer']['value']
                 return inp
             except BaseException as e:
                 raise(e)
-                cls.handler.send_error(e)
+                cls.comm.send_error(e)
 
     @classmethod
     def ask_for_input_with_prompt(cls, prompt, **options):

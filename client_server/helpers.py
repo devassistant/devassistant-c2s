@@ -3,8 +3,8 @@ import json
 import os
 import uuid
 
-from client_server import api, exceptions, settings
-from client_server.logger import logger
+from client_server import api, dialog_helper, exceptions, settings
+from client_server.logger import logger, JSONHandler
 
 def prepare_socket(path):
     try:
@@ -31,12 +31,48 @@ class QueryProcessor(object):
         '''Send an API-compliant error message with the specified reason'''
         self.handler.send(api.APIFormatter.format_error(reason))
 
+    def get_answer(self):
+        '''Recieve an answer from the client'''
+        return json.loads(self.handler.get_answer())
+
+    def set_dialoghelper_contex(self, run_id):
+        '''Set static context in JSONDialogHelper'''
+        # TODO: solve this in some less smelly way
+        dialog_helper.JSONDialogHelper.comm = self
+        dialog_helper.JSONDialogHelper.run_id = run_id
+
+    def clean_dialoghelper(self):
+        '''Remove static context from JSONDialogHelper'''
+        # TODO: solve this in some less smelly way
+        dialog_helper.JSONDialogHelper.comm = None
+        dialog_helper.JSONDialogHelper.run_id = None
+
     def process_run(self, args):
         '''Run an assistant'''
         logger.info('Serving a run request')
+        path = args['path']
         run_id = str(uuid.uuid4()).replace('-', '')
-        self.send_json({'run': {'id': run_id}})
-        self.send_json({'finished': {'id': run_id, 'status': 'ok'}})
+
+        da_args = {'__ui__': 'json'}
+
+        # TODO process arguments for the runnable!
+
+        to_run = api.DevAssistantAdaptor.get_runnable_to_run(path, da_args)
+        dalogger = api.DevAssistantAdaptor.get_logger()
+
+        try:
+            self.set_dialoghelper_contex(run_id)  # TODO: solve this in some less smelly way
+            self.send_json({'run': {'id': run_id}})
+            dalogger.handlers = []
+            dalogger.addHandler(JSONHandler(self, run_id))
+            dalogger.setLevel(args.get('loglevel', "INFO").upper())
+            to_run.run()
+            self.send_json({'finished': {'id': run_id, 'status': 'ok'}})
+        except BaseException as e:
+            raise exceptions.ProcessingError(str(e))
+        finally:
+            dalogger.handlers = []
+            self.clean_dialoghelper()
 
     def process_tree(self, args):
         '''Get a tree of runnables'''

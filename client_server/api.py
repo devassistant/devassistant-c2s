@@ -3,6 +3,8 @@ import json
 
 import devassistant
 from devassistant.actions import actions
+from devassistant.logger import logger as dalogger
+from devassistant import path_runner
 
 from client_server import exceptions, settings
 
@@ -90,7 +92,9 @@ class DevAssistantAdaptor(object):
 
         for segment in path.split('/')[1:]:
             found = False
+            print('segment: {}'.format(segment))
             for c in candidates:
+                print('candidate: {}'.format(c.name))
                 if c.name == segment:
                     found = True
                     candidates = cls.get_children(c)
@@ -104,3 +108,26 @@ class DevAssistantAdaptor(object):
         return [a for a in actions.keys() if not a.hidden] + \
                 devassistant.bin.TopAssistant().get_subassistants()
 
+    @classmethod
+    def path_to_dict(cls, path):
+        '''Convrets a path (str separated with /) to dict path runner expects'''
+        path = path.split('/')[1:]
+        ret = {}
+        for number in range(len(path)):
+            ret['subassistant_{}'.format(number)] = path[number]
+        return ret
+
+    @classmethod
+    def get_runnable_to_run(cls, path, args):
+        try:
+            p = devassistant.bin.TopAssistant().get_selected_subassistant_path(
+                       **cls.path_to_dict(path))
+            to_run = path_runner.PathRunner(p, args)
+        except BaseException:
+            # this can only be used for actions here!
+            to_run = cls.get_runnable_by_path(path)(**args)
+        return to_run
+
+    @classmethod
+    def get_logger(cls):
+        return dalogger
