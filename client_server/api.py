@@ -1,5 +1,7 @@
-
+import base64
+import hashlib
 import json
+import mimetypes
 
 import devassistant
 from devassistant.actions import actions
@@ -47,7 +49,7 @@ class APISerializer(object):
         }
 
         if get_icons:
-            rdict['icon'] = getattr(runnable, 'icon', None) # Actions do not have icons yet
+            rdict['icon'] = cls.serialize_icon(runnable, get_icons)
 
         if get_arguments:
             rdict['arguments'] = [arg.__dict__ for arg in runnable.args]
@@ -70,6 +72,35 @@ class APISerializer(object):
     @classmethod
     def serialize_log(cls, message, level, run_id):
         raise NotImplementedError
+
+    @classmethod
+    def serialize_icon(cls, assistant, variant):
+        if not getattr(assistant, 'icon_path', ''):
+            return None
+        icon = {'checksum': cls._md5file(assistant.icon_path)}
+        if variant == 'data':
+            icon['data'] = cls._base64file(assistant.icon_path)
+            icon['mimetype'] = cls._mimefile(assistant.icon_path)
+        return icon
+
+    @classmethod
+    def _md5file(cls, fname):
+        """http://stackoverflow.com/a/3431838"""
+        hash = hashlib.md5()
+        with open(fname, 'rb') as f:
+            hash.update(f.read())
+        return hash.hexdigest()
+
+    @classmethod
+    def _base64file(cls, fname):
+        """http://stackoverflow.com/a/3715530"""
+        with open(fname, 'rb') as f:
+            encoded_string = base64.b64encode(f.read())
+        return encoded_string.decode()
+
+    @classmethod
+    def _mimefile(cls, fname):
+        return mimetypes.guess_type(fname)[0]
 
 
 class DevAssistantAdaptor(object):
