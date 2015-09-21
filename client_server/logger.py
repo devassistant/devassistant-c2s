@@ -4,7 +4,8 @@ from client_server import api
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
+#logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 class JSONHandler(logging.Handler):

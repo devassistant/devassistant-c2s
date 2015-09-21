@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import logging
 import socketserver
 
 from client_server import handlers, helpers, settings

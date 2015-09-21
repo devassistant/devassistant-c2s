@@ -24,12 +24,11 @@ class QueryProcessor(object):
     def send_json(self, dictionary):
         '''JSON-format and send a message'''
         msg = api.APIFormatter.format_json(dictionary)
-        print(len(msg))
         self.handler.send(msg)
 
     def send(self, msg):
         '''Send already JSON-formatted message'''
-        print(len(msg))
+        logger.debug('Sent message ({} bytes)'.format(len(msg)))
         self.handler.send(msg)
 
     def send_error(self, reason, run_id=''):
@@ -72,7 +71,7 @@ class QueryProcessor(object):
             dalogger.addHandler(JSONHandler(self, run_id))
             dalogger.setLevel(args.get('loglevel', "INFO").upper())
             to_run.run()
-            self.send(api.APIFormatter.format_run_finished(run_id))
+            self.send(api.APIFormatter.format_run_finished(run_id, 'ok'))
         except BaseException as e:
             raise exceptions.ProcessingError(str(e), run_id=run_id)
         finally:
@@ -124,8 +123,9 @@ class QueryProcessor(object):
             logger.info('Error processing request: "{data}" ({e}) '.format(data=data, e=e))
             try:
                 run_id = e.run_id
+                self.send_error('Error processing request: ' + str(e), run_id)
+                self.send(api.APIFormatter.format_run_finished(run_id, 'error'))
             except AttributeError:
-                run_id = ''
-            self.send_error('Error processing request: ' + str(e), run_id)
+                self.send_error('Error processing request: ' + str(e))
 
 

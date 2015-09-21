@@ -36,8 +36,8 @@ class APIFormatter(object):
         return cls.format_json({'run': {'id': run_id}})
 
     @classmethod
-    def format_run_finished(cls, run_id):
-        return cls.format_json({'finished': {'id': run_id, 'status': 'ok'}})
+    def format_run_finished(cls, run_id, status):
+        return cls.format_json({'finished': {'id': run_id, 'status': status}})
 
 
 class APISerializer(object):
