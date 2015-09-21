@@ -25,6 +25,10 @@ class RequestFormatter(object):
         json_message = json.dumps({'query': {'request': 'run', 'options': full_args}})
         return cls.format_message(json_message)
 
+    @classmethod
+    def format_answer(cls, run_id, value):
+        json_message = json.dumps({'answer': {'id': run_id, 'value': str(value)}})
+        return cls.format_message(json_message)
 
 class ConsoleClient(object):
 
@@ -67,6 +71,7 @@ class ConsoleClient(object):
             ap = get_argument_parser(reply['tree'])
             user_args = vars(ap.parse_args(sys.argv[1:]))
             self.send(RequestFormatter.format_run_request(user_args))
+            run_id = None
             while True:
                 data = self.receive()
                 if not data:
@@ -82,10 +87,22 @@ class ConsoleClient(object):
                 elif 'finished' in json_data:
                     self.handle_finish(json_data['finished']['status'])
                     break
+                elif 'question' in json_data:
+                    self.handle_question(run_id, json_data)
                 else:
-                    raise exceptions.ClientException('Invalid message: ' + json_data)
+                    raise exceptions.ClientException('Invalid message: ' + str(json_data))
         else:
             print('Wrong reply: ' + reply)
+
+    def handle_question(self, run_id, args):
+        print(args)
+        question = args['question']
+        try:
+            print(question['text'])
+        except KeyError:
+            pass
+        reply = input(question['prompt'] + ' ')
+        self.send(RequestFormatter.format_answer(run_id, reply))
 
     def handle_log(self, level, message):
         print('{}: {}'.format(level, message))
