@@ -26,7 +26,6 @@ class JSONDialogHelper(object):
         prompt += ' [y/n]'
         while True:
             choice = cls.ask_for_input_with_prompt(prompt, message=message, **options)
-            # PROBLEM: choice is a generator? blow up here
             choice = choice.lower()
             if choice not in cls.yesno_list:
                 cls.comm.send_error('You have to choose one of y/n.')
@@ -59,7 +58,7 @@ class JSONDialogHelper(object):
 
         while True:
             try:
-                reply = yield from cls.comm.get_answer()
+                reply = cls.comm.get_answer()
                 if reply['answer']['id'] != cls.run_id:
                     raise(Exception('Invalid id'))
                 inp = reply['answer']['value']
