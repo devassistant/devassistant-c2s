@@ -1,6 +1,7 @@
 
 import json
 import os
+import traceback
 import uuid
 
 from client_server import api, dialog_helper, exceptions, settings
@@ -28,7 +29,7 @@ class QueryProcessor(object):
 
     def send(self, msg):
         '''Send already JSON-formatted message'''
-        logger.debug('Sent message ({} bytes)'.format(len(msg)))
+        logger.debug('Sent a message ({} bytes)'.format(len(msg)))
         self.handler.send(msg)
 
     def send_error(self, reason, run_id=''):
@@ -52,12 +53,14 @@ class QueryProcessor(object):
         dialog_helper.JSONDialogHelper.run_id = None
 
     def process_run(self, args):
-        '''Run an assistant'''
+        '''Run an assistant/action'''
         logger.info('Serving a run request')
         path = args['path']
         run_id = str(uuid.uuid4()).replace('-', '')
 
-        da_args = {'__ui__': 'json'}
+        da_args = args.copy()
+        del(da_args['path'])
+        da_args['__ui__'] = 'json'
 
         # TODO process arguments for the runnable!
 
@@ -70,9 +73,11 @@ class QueryProcessor(object):
             dalogger.handlers = []
             dalogger.addHandler(JSONHandler(self, run_id))
             dalogger.setLevel(args.get('loglevel', "INFO").upper())
+            logger.info('Running with args: {}'.format(da_args))
             to_run.run()
             self.send(api.APIFormatter.format_run_finished(run_id, 'ok'))
         except BaseException as e:
+            logger.info(traceback.format_exc())
             raise exceptions.ProcessingError(str(e), run_id=run_id)
         finally:
             dalogger.handlers = []

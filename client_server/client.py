@@ -6,6 +6,7 @@ import socket
 import sys
 
 from client_server import exceptions, settings
+from client_server.logger import logger
 
 class RequestFormatter(object):
 
@@ -23,6 +24,7 @@ class RequestFormatter(object):
         full_args = args.copy()
         full_args['path'] = '/' + '/'.join([args[key] for key in sorted([arg for arg in args if arg.startswith('subassistant_')]) if args[key]])
         json_message = json.dumps({'query': {'request': 'run', 'options': full_args}})
+        logger.debug('Query to server: {}'.format(json_message))
         return cls.format_message(json_message)
 
     @classmethod
@@ -117,6 +119,7 @@ class ConsoleClient(object):
             print('Run Finished with Errors')
 
 def get_argument_parser(tree):
+    '''Generate an ArgumentParser based on the tree of assistants/actions received'''
     parser = argparse.ArgumentParser(description='')
     subparsers = parser.add_subparsers(dest='subassistant_0')
     for runnable in tree:
@@ -124,12 +127,18 @@ def get_argument_parser(tree):
     return parser
 
 def add_parser_recursive(parsers, runnable, level):
-    parser = parsers.add_parser(name=runnable['name'], description=runnable['description'])
+    parser = parsers.add_parser(name=runnable['name'], description='')
     subparsers = parser.add_subparsers(dest='subassistant_{}'.format(level))
     for arg in runnable.get('arguments', []):
-        kwargs = {k:v for k,v in arg['kwargs'].items() if k in ['help', 'nargs', 'action', 'dest', 'const']}
+        kwargs = arg['kwargs'].copy()
         if isinstance(kwargs.get('action'), list): # DA allows a list [default_iff_used, value]
             del(kwargs['action'])
+        # Remove values that ArgumentParser can't understand
+        for invalid in ['preserved']:
+            try:
+                del(kwargs[invalid])
+            except KeyError:
+                pass
         parser.add_argument(*arg['flags'], **kwargs)
     for child in runnable['children']:
         add_parser_recursive(subparsers, child, level+1)
