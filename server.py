@@ -46,4 +46,6 @@ if __name__ == '__main__':
         server.serve_forever()
     except KeyboardInterrupt:
         logger.info('Killed by user')
+    except SystemExit:
+        logger.info('Killed by client')
 

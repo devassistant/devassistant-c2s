@@ -3,6 +3,7 @@ import json
 import os
 import traceback
 import uuid
+import sys
 
 from client_server import api, dialog_helper, exceptions, settings
 from client_server.logger import logger, JSONHandler
@@ -105,6 +106,15 @@ class QueryProcessor(object):
                                                       names_only=True)
         self.send_json({"detail": detail})
 
+    def process_shutdown(self):
+        '''Shutdown the server if it was invoked with --client-stoppable'''
+        logger.info('Serving a shutdown request')
+        # TODO: use argparser instead? (we would need to pass the context here)
+        if '--client-stoppable' in sys.argv:
+            raise SystemExit('Stopped by client')
+        else:
+            raise exceptions.ProcessingError('Server was not invoked with --client-stoppable')
+
     def process_query(self, data):
         try:
             query = json.loads(data)['query']
@@ -114,6 +124,8 @@ class QueryProcessor(object):
                 self.process_detail(query['options'])
             elif query['request'] == 'run':
                 self.process_run(query['options'])
+            elif query['request'] == 'shutdown':
+                self.process_shutdown()
             else:
                 raise KeyError('Not a valid request')
             logger.info('Done')
