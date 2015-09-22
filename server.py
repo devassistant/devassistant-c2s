@@ -3,9 +3,8 @@
 import sys
 import argparse
 import logging
-import socketserver
 
-from client_server import handlers, helpers, settings
+from client_server import handlers, helpers, servers, settings
 from client_server.logger import logger
 
 if __name__ == '__main__':
@@ -24,7 +23,7 @@ if __name__ == '__main__':
     args = vars(ap.parse_args())
 
     if 'tcp' in args and 'unix' in args:
-        print('Can not specify both UNIX and TCP at once!', file=sys.stdout)
+        logger.error('Can not specify both UNIX and TCP at once!')
         sys.exit(1)
 
     if 'tcp' in args:
@@ -33,19 +32,21 @@ if __name__ == '__main__':
             port = int(port)
         except AttributeError:
             host, port = (settings.SOCKET_HOST, settings.SOCKET_PORT)
-        server = socketserver.TCPServer((host, port), handlers.DARequestHandler)
+        server = servers.TCPServer((host, port), handlers.DARequestHandler)
         logger.info('TCP server started on {}:{}'.format(host, port))
 
     else: # UNIX server is default
         filename = args.get('unix') or settings.SOCKET_FILENAME
         helpers.prepare_socket(filename)
-        server = socketserver.UnixStreamServer(filename, handlers.DARequestHandler)
+        server = servers.UNIXServer(filename, handlers.DARequestHandler)
         logger.info('UNIX server started at ' + filename)
 
+    server.set_context({'client_stoppable': args.get('client_stoppable')})
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         logger.info('Killed by user')
+        sys.exit(130)
     except SystemExit:
-        logger.info('Killed by client')
-
+        logger.info('Killed by API call')
+        sys.exit(0)
