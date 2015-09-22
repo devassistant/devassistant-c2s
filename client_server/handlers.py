@@ -15,7 +15,7 @@ class DARequestHandler(socketserver.BaseRequestHandler):
         '''Wait for client to provide input'''
         logger.info('Asking client...')
         msg = self.receive()
-        logger.info('Answer received: ' + msg)
+        logger.debug('Answer received: ' + msg)
         return msg
 
     def receive(self):

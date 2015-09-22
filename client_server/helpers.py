@@ -77,7 +77,7 @@ class QueryProcessor(object):
             to_run.run()
             self.send(api.APIFormatter.format_run_finished(run_id, 'ok'))
         except BaseException as e:
-            logger.info(traceback.format_exc())
+            logger.error(traceback.format_exc())
             raise exceptions.ProcessingError(str(e), run_id=run_id)
         finally:
             dalogger.handlers = []
@@ -135,7 +135,7 @@ class QueryProcessor(object):
             logger.info('Request not valid DA API call: "{data}" ({e}) '.format(data=data, e=e))
             self.send_error('Request not valid API call')
         except exceptions.ProcessingError as e:
-            logger.info('Error processing request: "{data}" ({e}) '.format(data=data, e=e))
+            logger.error('Error processing request: "{data}" ({e}) '.format(data=data, e=e))
             try:
                 run_id = e.run_id
                 self.send_error('Error processing request: ' + str(e), run_id)
