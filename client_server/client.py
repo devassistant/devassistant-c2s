@@ -71,6 +71,7 @@ class ConsoleClient(object):
             sys.exit(1)
 
     def run(self, args):
+        ret = 0
         if self.socket is None:
             raise exceptions.ClientException('Not connected')
 
@@ -79,6 +80,7 @@ class ConsoleClient(object):
 
         if 'error' in reply:
             print('Error: ' + reply['error']['reason'])
+            ret = 1
         elif 'tree' in reply:
             ap = get_argument_parser(reply['tree'])
             user_args = vars(ap.parse_args(sys.argv[1:]))
@@ -98,6 +100,7 @@ class ConsoleClient(object):
                     self.handle_error(json_data['error']['reason'])
                 elif 'finished' in json_data:
                     self.handle_finish(json_data['finished']['status'])
+                    ret = self.retcode_finish(json_data['finished']['status'])
                     break
                 elif 'question' in json_data:
                     self.handle_question(run_id, json_data)
@@ -105,6 +108,8 @@ class ConsoleClient(object):
                     raise exceptions.ClientException('Invalid message: ' + str(json_data))
         else:
             print('Wrong reply: ' + reply)
+            ret = 1
+        return ret
 
     def handle_question(self, run_id, args):
         print(args)
@@ -127,6 +132,11 @@ class ConsoleClient(object):
             print('Run Finished OK')
         else:
             print('Run Finished with Errors')
+
+    def retcode_finish(self, status):
+        if status == 'ok':
+            return 0
+        return 1
 
 def get_argument_parser(tree):
     '''Generate an ArgumentParser based on the tree of assistants/actions received'''
