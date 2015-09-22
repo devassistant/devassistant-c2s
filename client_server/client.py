@@ -61,9 +61,14 @@ class ConsoleClient(object):
         return result.decode('utf-8')
 
     def start(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self.filename)
-        self.socket = sock
+        try:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(self.filename)
+            self.socket = sock
+        except ConnectionError as e:
+            logger.error('Could not connect to the server, maybe it\'s not running?')
+            logger.error('The message was: {}'.format(e))
+            sys.exit(1)
 
     def run(self, args):
         if self.socket is None:
