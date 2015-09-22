@@ -109,8 +109,7 @@ class QueryProcessor(object):
     def process_shutdown(self):
         '''Shutdown the server if it was invoked with --client-stoppable'''
         logger.info('Serving a shutdown request')
-        # TODO: use argparser instead? (we would need to pass the context here)
-        if '--client-stoppable' in sys.argv:
+        if self.handler.server.context.get('client_stoppable', False):
             raise SystemExit('Stopped by client')
         else:
             raise exceptions.ProcessingError('Server was not invoked with --client-stoppable')
