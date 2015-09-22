@@ -52,14 +52,13 @@ class QueryProcessor(object):
         dialog_helper.JSONDialogHelper.comm = None
         dialog_helper.JSONDialogHelper.run_id = None
 
-    def process_run(self, args):
+    def process_run(self, options):
         '''Run an assistant/action'''
         logger.info('Serving a run request')
-        path = args['path']
+        path = options['path']
         run_id = str(uuid.uuid4()).replace('-', '')
 
-        da_args = args.copy()
-        del(da_args['path'])
+        da_args = options['arguments']
         da_args['__ui__'] = 'json'
 
         # TODO process arguments for the runnable!
@@ -72,7 +71,7 @@ class QueryProcessor(object):
             self.send(api.APIFormatter.format_run_ack(run_id))
             dalogger.handlers = []
             dalogger.addHandler(JSONHandler(self, run_id))
-            dalogger.setLevel(args.get('loglevel', "INFO").upper())
+            dalogger.setLevel(options.get('loglevel', "INFO").upper())
             logger.info('Running with args: {}'.format(da_args))
             to_run.run()
             self.send(api.APIFormatter.format_run_finished(run_id, 'ok'))

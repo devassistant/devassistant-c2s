@@ -21,9 +21,14 @@ class RequestFormatter(object):
 
     @classmethod
     def format_run_request(cls, args):
-        full_args = args.copy()
-        full_args['path'] = '/' + '/'.join([args[key] for key in sorted([arg for arg in args if arg.startswith('subassistant_')]) if args[key]])
-        json_message = json.dumps({'query': {'request': 'run', 'options': full_args}})
+        new_args = args.copy()
+        path = ''
+        for key in sorted([a for a in new_args.keys() if a.startswith('subassistant_')]):
+            if new_args[key]:
+                path += '/' + new_args[key]
+            del new_args[key]
+
+        json_message = json.dumps({'query': {'request': 'run', 'options': {'path': path, 'arguments': new_args}}})
         logger.debug('Query to server: {}'.format(json_message))
         return cls.format_message(json_message)
 
@@ -120,14 +125,14 @@ class ConsoleClient(object):
 
 def get_argument_parser(tree):
     '''Generate an ArgumentParser based on the tree of assistants/actions received'''
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='',argument_default=argparse.SUPPRESS)
     subparsers = parser.add_subparsers(dest='subassistant_0')
     for runnable in tree:
         add_parser_recursive(subparsers, runnable, 1)
     return parser
 
 def add_parser_recursive(parsers, runnable, level):
-    parser = parsers.add_parser(name=runnable['name'], description='')
+    parser = parsers.add_parser(name=runnable['name'], description='',argument_default=argparse.SUPPRESS)
     subparsers = parser.add_subparsers(dest='subassistant_{}'.format(level))
     for arg in runnable.get('arguments', []):
         kwargs = arg['kwargs'].copy()
