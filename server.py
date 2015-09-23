@@ -11,23 +11,23 @@ if __name__ == '__main__':
 
     ap = argparse.ArgumentParser(usage='DevAssistant server. If no arguments are provided, the UNIX server is started',
                                  argument_default=argparse.SUPPRESS)
-    ap.add_argument('--unix',
+    ap.add_argument('-u', '--unix',
                     nargs='?',
                     metavar='FILENAME',
                     help='Run a UNIX socket server listening on a filename (default: {})'.format(settings.SOCKET_FILENAME))
-    ap.add_argument('--tcp',
+    ap.add_argument('-t', '--tcp',
                     nargs='?',
                     metavar='HOST:PORT',
                     help='Run a TCP server listening on HOST:PORT (default: {}:{})'.format(settings.SOCKET_HOST, settings.SOCKET_PORT))
-    ap.add_argument('--client-stoppable', action='store_true', help='Clients may stop the server via an API call')
-    ap.add_argument('--debug', action='store_true', help='Display debug log messages on stdout')
-    ap.add_argument('--verbose', action='store_true', help='Display informative log messages on stdout')
+    ap.add_argument('-s', '--client-stoppable', action='store_true', help='Clients may stop the server via an API call')
+    ap.add_argument('-d', '--debug', action='store_true', help='Display debug log messages on stdout')
+    ap.add_argument('-v', '--verbose', action='store_true', help='Display informative log messages on stdout')
     args = vars(ap.parse_args())
 
-    if args.get('debug'):
-        logger.setLevel(logging.DEBUG)
-    elif args.get('verbose'):
+    if args.get('verbose'):
         logger.setLevel(logging.INFO)
+    elif args.get('debug'):
+        logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.WARNING)
 
