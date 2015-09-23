@@ -1,6 +1,7 @@
 
 import errno
 import json
+import os
 import socketserver
 
 from client_server import api, helpers, exceptions
@@ -28,6 +29,7 @@ class DARequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         logger.info('Incoming connection')
+        cwd = os.getcwd()
         try:
             while True: # Wait for client
                 data = self.receive()
@@ -43,7 +45,6 @@ class DARequestHandler(socketserver.BaseRequestHandler):
                 logger.info('Client disconnected (broken pipe)')
             else:
                 raise
-
         # Other exceptions
         except Exception as e:
             try:
@@ -51,4 +52,7 @@ class DARequestHandler(socketserver.BaseRequestHandler):
             except:
                 pass
             raise
+        # Return to original CWD
+        finally:
+            os.chdir(cwd)
 
