@@ -1,7 +1,13 @@
-FROM fedora:22
+FROM centos:7
 
-RUN dnf clean all && dnf install -y sudo && dnf clean all
+RUN yum clean all && yum update -y && yum install -y sudo epel-release && yum clean all
+RUN yum install -y python34 python3-pip && yum clean all
 
-RUN echo -e '#!/usr/bin/bash\ngroupadd dev -g $DEV_GID\nuseradd dev -u $DEV_UID -g $DEV_GID\nsudo -u dev touch /tmp/a' > /root/da-server && chmod +x /root/da-server
+# Sudo complains about not having TTY unless this is done (see rhbz#1020147)
+RUN echo 'Defaults !requiretty' >> /etc/sudoers
 
-ENTRYPOINT ["/root/da-server"]
+RUN mkdir /cwd /devassistant-home
+
+ADD server-wrapper.sh .
+
+ENTRYPOINT ["./server-wrapper.sh"]
