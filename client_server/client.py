@@ -148,7 +148,6 @@ def get_argument_parser(tree):
 
 def add_parser_recursive(parsers, runnable, level):
     parser = parsers.add_parser(name=runnable['name'], description='',argument_default=argparse.SUPPRESS)
-    subparsers = parser.add_subparsers(dest='subassistant_{}'.format(level))
     for arg in runnable.get('arguments', []):
         kwargs = arg['kwargs'].copy()
         if isinstance(kwargs.get('action'), list): # DA allows a list [default_iff_used, value]
@@ -160,7 +159,10 @@ def add_parser_recursive(parsers, runnable, level):
             except KeyError:
                 pass
         parser.add_argument(*arg['flags'], **kwargs)
-    for child in runnable['children']:
-        add_parser_recursive(subparsers, child, level+1)
+    if runnable['children']:
+        subparsers = parser.add_subparsers(dest='subassistant_{}'.format(level))
+        subparsers.required = True
+        for child in runnable['children']:
+            add_parser_recursive(subparsers, child, level+1)
 
 
