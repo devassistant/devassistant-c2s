@@ -6,5 +6,8 @@ from client_server.client import ConsoleClient
 if __name__ == '__main__':
 
     cc = ConsoleClient()
-    cc.start()
-    sys.exit(cc.run({}))
+    try:
+        cc.start()
+        sys.exit(cc.run({}))
+    except KeyboardInterrupt:
+        sys.exit(130)
