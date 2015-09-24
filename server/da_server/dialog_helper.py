@@ -49,7 +49,6 @@ class JSONDialogHelper(object):
 
     @classmethod
     def _ask_for_text_or_password(cls, prompt, type, **options):
-        print(options)
         question = {'id': cls.run_id, 'prompt': prompt, 'type': type}
         msg = options.get('message', None)
         if msg:

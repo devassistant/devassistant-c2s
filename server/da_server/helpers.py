@@ -62,8 +62,6 @@ class QueryProcessor(object):
         da_args = options['arguments']
         da_args['__ui__'] = 'json'
 
-        # TODO process arguments for the runnable!
-
         to_run = api.DevAssistantAdaptor.get_runnable_to_run(path, da_args)
         dalogger = api.DevAssistantAdaptor.get_logger()
 
