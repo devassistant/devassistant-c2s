@@ -6,13 +6,19 @@ is buggy, and is not meant to be used in production in any way.
 
 ## How to Test
 
-To run the UNIX domain sockets-based server, run
+The server can run both as a UNIX socket server (`--unix`, by default
+`~/.devassistant-socket`) and a TCP server (`--tcp`, by default
+`localhost:7776`). You may specify a filename or `HOST:PORT` if you wish to
+override defaults. Example:
 
-    ./server.py
+    $ ./server.py --debug --unix ~/.foo
 
-The server automatically listens at `~/.devassistant-socket`. To connect to the
-server, either use the `client.py` script, or the Linux socket utility `socat`:
+To connect to the server, run the `client.py` script in the `client` directory,
+or use the Linux socket utility `socat`:
 
-    socat - UNIX-CONNECT:~/.devassistant-socket
+    $ ./client.py --help
+
+    $ socat - UNIX-CONNECT:~/.devassistant-socket
+    {"query": {"request": "get_tree", "options": {}}}
 
 
