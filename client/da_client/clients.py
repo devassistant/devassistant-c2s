@@ -7,7 +7,7 @@ import socket
 import sys
 import os
 
-from da_client import exceptions, settings
+from da_client import arguments, exceptions, settings
 from da_client.logger import logger
 
 class RequestFormatter(object):
@@ -56,9 +56,14 @@ class ConsoleClient(object):
 
     BUFFER_SIZE = 8182
 
-    def __init__(self, filename=settings.SOCKET_FILENAME):
-        self.filename = filename
+    def __init__(self):
         self.socket = None
+
+    def connect_socket(self):
+        raise NotImplementedError
+
+    def format_connection_error(self):
+        raise NotImplementedError
 
     def send(self, message):
         self.socket.send(message.encode('utf-8'))
@@ -76,16 +81,9 @@ class ConsoleClient(object):
         return result.decode('utf-8')
 
     def start(self):
-        try:
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.connect(self.filename)
-            self.socket = sock
-        except ConnectionError as e:
-            logger.error('Could not connect to the server, maybe it\'s not running?')
-            logger.error('The message was: {}'.format(e))
-            sys.exit(1)
+        self.socket = self.connect_socket()
 
-    def run(self, args):
+    def run(self, server_args):
         ret = 0
         if self.socket is None:
             raise exceptions.ClientException('Not connected')
@@ -112,8 +110,8 @@ class ConsoleClient(object):
             print('Error: ' + reply['error']['reason'])
             ret = 1
         elif 'tree' in reply:
-            ap = get_argument_parser(reply['tree'])
-            user_args = vars(ap.parse_args(sys.argv[1:]))
+            ap = arguments.get_argument_parser(reply['tree'])
+            user_args = vars(ap.parse_args(server_args))
             if user_args.get('__comm_debug__'):
                 logger.setLevel(logging.DEBUG)
             self.send(RequestFormatter.format_run_request(user_args))
@@ -122,22 +120,28 @@ class ConsoleClient(object):
                 data = self.receive()
                 if not data:
                     break
-                json_data = json.loads(data)
-                if 'run' in json_data:
-                    run_id = json_data['run']['id']
-                    print('Executing assistant...')
-                elif 'log' in json_data:
-                    self.handle_log(json_data['log']['level'], json_data['log']['message'])
-                elif 'error' in json_data:
-                    self.handle_error(json_data['error']['reason'])
-                elif 'finished' in json_data:
-                    self.handle_finish(json_data['finished']['status'])
-                    ret = self.retcode_finish(json_data['finished']['status'])
+
+                finished = False
+                for line in data.splitlines():
+                    json_data = json.loads(line)
+                    if 'run' in json_data:
+                        run_id = json_data['run']['id']
+                        print('Executing assistant...')
+                    elif 'log' in json_data:
+                        self.handle_log(json_data['log']['level'], json_data['log']['message'])
+                    elif 'error' in json_data:
+                        self.handle_error(json_data['error']['reason'])
+                    elif 'finished' in json_data:
+                        self.handle_finish(json_data['finished']['status'])
+                        ret = self.retcode_finish(json_data['finished']['status'])
+                        finished = True
+                        break
+                    elif 'question' in json_data:
+                        self.handle_question(run_id, json_data)
+                    else:
+                        raise exceptions.ClientException('Invalid message: ' + str(json_data))
+                if finished:
                     break
-                elif 'question' in json_data:
-                    self.handle_question(run_id, json_data)
-                else:
-                    raise exceptions.ClientException('Invalid message: ' + str(json_data))
         else:
             print('Wrong reply: ' + reply)
             ret = 1
@@ -170,57 +174,33 @@ class ConsoleClient(object):
             return 0
         return 1
 
-def get_argument_parser(tree):
-    '''Generate an ArgumentParser based on the tree of assistants/actions received'''
-    parser = DAArgumentParser(description='',argument_default=argparse.SUPPRESS)
-    add_toplevel_arguments(parser)
-    if len(tree) > 0:
-        subparsers = parser.add_subparsers(dest='subassistant_0')
-        subparsers.required = True
-        for runnable in tree:
-            add_parser_recursive(subparsers, runnable, 1)
-    return parser
 
-def add_toplevel_arguments(parser):
-    parser.add_argument('--debug',
-                        help='Show debug output of devassistant (may be a verbose a lot!).',
-                        action='store_true',
-                        dest='__debug__',
-                        default=False)
-    parser.add_argument('--comm-debug',
-                        help='Show debug output of communication with server.',
-                        action='store_true',
-                        dest='__comm_debug__',
-                        default=False)
+class UNIXClient(ConsoleClient):
 
-def add_parser_recursive(parsers, runnable, level):
-    parser = parsers.add_parser(name=runnable['name'], description='',argument_default=argparse.SUPPRESS)
-    for arg in runnable.get('arguments', []):
-        kwargs = arg['kwargs'].copy()
-        if isinstance(kwargs.get('action'), list): # DA allows a list [default_iff_used, value]
-            del(kwargs['action'])
-        # Remove values that ArgumentParser can't understand
-        for invalid in ['preserved']:
-            try:
-                del(kwargs[invalid])
-            except KeyError:
-                pass
-        parser.add_argument(*arg['flags'], **kwargs)
-    if runnable['children']:
-        subparsers = parser.add_subparsers(dest='subassistant_{}'.format(level))
-        subparsers.required = True
-        for child in runnable['children']:
-            add_parser_recursive(subparsers, child, level+1)
+    def __init__(self, filename=settings.SOCKET_FILENAME):
+        super(UNIXClient, self).__init__()
+        self.filename = filename
 
+    def connect_socket(self):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self.filename)
+        return sock
 
-class DAArgumentParser(argparse.ArgumentParser):
+    def format_connection_error(self):
+        return 'Could not connect to server at "{}", maybe it\'s not running?'.format(self.filename)
 
-    def error(self, message):
-        self.print_usage()
-        string = 'Error: '
-        if message.startswith('the following arguments are required'):
-            string += 'You must select a subassistant!'
-        else:
-            string += message
-        print(string)
-        exit(2)
+class TCPClient(ConsoleClient):
+
+    def __init__(self, host=settings.SOCKET_HOST, port=settings.SOCKET_PORT):
+        super(TCPClient, self).__init__()
+        self.host = host
+        self.port = port
+
+    def connect_socket(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.host, self.port))
+        return sock
+
+    def format_connection_error(self):
+        return  'Could not connect to server at {}:{}, maybe it\'s not running?'.format(self.host, self.port)
+
