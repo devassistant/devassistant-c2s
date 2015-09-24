@@ -80,6 +80,7 @@ class QueryProcessor(object):
         finally:
             dalogger.handlers = []
             self.clean_dialoghelper()
+            api.DevAssistantAdaptor.reload_command_runners()  # see https://github.com/tradej/devassistant-c2s/issues/3
 
     def process_tree(self, args):
         '''Get a tree of runnables'''

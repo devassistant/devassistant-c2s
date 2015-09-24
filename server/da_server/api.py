@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import importlib
 import json
 import mimetypes
 
@@ -7,6 +8,7 @@ import devassistant
 from devassistant.actions import actions
 from devassistant.logger import logger as dalogger
 from devassistant import path_runner
+from devassistant import command_runners
 
 from da_server import exceptions, settings
 
@@ -159,3 +161,7 @@ class DevAssistantAdaptor(object):
     @classmethod
     def get_logger(cls):
         return dalogger
+
+    @classmethod
+    def reload_command_runners(cls):
+        importlib.reload(command_runners)
