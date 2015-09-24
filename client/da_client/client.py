@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import socket
 import sys
 
@@ -28,7 +29,13 @@ class RequestFormatter(object):
                 path += '/' + new_args[key]
             del new_args[key]
 
-        json_message = json.dumps({'query': {'request': 'run', 'options': {'path': path, 'arguments': new_args}}})
+        for key in [a for a in new_args.keys() if a.startswith('__') and a.endswith('__')]:
+            del new_args[key]
+
+        message = {'query': {'request': 'run', 'options': {'path': path, 'arguments': new_args}}}
+        if args.get('__debug__'):
+            message['query']['options']['loglevel'] = 'debug'
+        json_message = json.dumps(message)
         logger.debug('Query to server: {}'.format(json_message))
         return cls.format_message(json_message)
 
@@ -84,6 +91,8 @@ class ConsoleClient(object):
         elif 'tree' in reply:
             ap = get_argument_parser(reply['tree'])
             user_args = vars(ap.parse_args(sys.argv[1:]))
+            if user_args.get('__comm_debug__'):
+                logger.setLevel(logging.DEBUG)
             self.send(RequestFormatter.format_run_request(user_args))
             run_id = None
             while True:
@@ -141,10 +150,23 @@ class ConsoleClient(object):
 def get_argument_parser(tree):
     '''Generate an ArgumentParser based on the tree of assistants/actions received'''
     parser = argparse.ArgumentParser(description='',argument_default=argparse.SUPPRESS)
+    add_toplevel_arguments(parser)
     subparsers = parser.add_subparsers(dest='subassistant_0')
     for runnable in tree:
         add_parser_recursive(subparsers, runnable, 1)
     return parser
+
+def add_toplevel_arguments(parser):
+    parser.add_argument('--debug',
+                        help='Show debug output of devassistant (may be a verbose a lot!).',
+                        action='store_true',
+                        dest='__debug__',
+                        default=False)
+    parser.add_argument('--comm-debug',
+                        help='Show debug output of communication with server.',
+                        action='store_true',
+                        dest='__comm_debug__',
+                        default=False)
 
 def add_parser_recursive(parsers, runnable, level):
     parser = parsers.add_parser(name=runnable['name'], description='',argument_default=argparse.SUPPRESS)
