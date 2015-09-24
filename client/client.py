@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import sys
 
-from client_server.client import ConsoleClient
+from da_client.client import ConsoleClient
 
 if __name__ == '__main__':
 

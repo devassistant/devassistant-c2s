@@ -5,5 +5,3 @@ class ProcessingError(Exception):
         if 'run_id' in kwargs:
             self.run_id = kwargs['run_id']
 
-class ClientException(Exception):
-    pass

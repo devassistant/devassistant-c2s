@@ -5,8 +5,8 @@ import traceback
 import uuid
 import sys
 
-from client_server import api, dialog_helper, exceptions, settings
-from client_server.logger import logger, JSONHandler
+from da_server import api, dialog_helper, exceptions, settings
+from da_server.logger import logger, JSONHandler
 
 def prepare_socket(path):
     try:

@@ -4,8 +4,8 @@ import sys
 import argparse
 import logging
 
-from client_server import handlers, helpers, servers, settings
-from client_server.logger import logger
+from da_server import handlers, helpers, servers, settings
+from da_server.logger import logger
 
 if __name__ == '__main__':
 

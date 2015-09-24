@@ -8,7 +8,7 @@ from devassistant.actions import actions
 from devassistant.logger import logger as dalogger
 from devassistant import path_runner
 
-from client_server import exceptions, settings
+from da_server import exceptions, settings
 
 class APIFormatter(object):
 

@@ -4,8 +4,8 @@ import json
 import os
 import socketserver
 
-from client_server import api, helpers, exceptions
-from client_server.logger import logger
+from da_server import api, helpers, exceptions
+from da_server.logger import logger
 
 class DARequestHandler(socketserver.BaseRequestHandler):
     '''This class takes care of communicating with the client. It only handles

@@ -4,7 +4,7 @@ import socketserver
 import threading
 import traceback
 
-from client_server.logger import logger
+from da_server.logger import logger
 
 
 class DAServer(socketserver.BaseServer):

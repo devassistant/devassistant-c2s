@@ -5,8 +5,8 @@ import json
 import socket
 import sys
 
-from client_server import exceptions, settings
-from client_server.logger import logger
+from da_client import exceptions, settings
+from da_client.logger import logger
 
 class RequestFormatter(object):
 
