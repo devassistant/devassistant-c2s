@@ -172,11 +172,13 @@ class ConsoleClient(object):
 
 def get_argument_parser(tree):
     '''Generate an ArgumentParser based on the tree of assistants/actions received'''
-    parser = argparse.ArgumentParser(description='',argument_default=argparse.SUPPRESS)
+    parser = DAArgumentParser(description='',argument_default=argparse.SUPPRESS)
     add_toplevel_arguments(parser)
-    subparsers = parser.add_subparsers(dest='subassistant_0')
-    for runnable in tree:
-        add_parser_recursive(subparsers, runnable, 1)
+    if len(tree) > 0:
+        subparsers = parser.add_subparsers(dest='subassistant_0')
+        subparsers.required = True
+        for runnable in tree:
+            add_parser_recursive(subparsers, runnable, 1)
     return parser
 
 def add_toplevel_arguments(parser):
@@ -211,3 +213,14 @@ def add_parser_recursive(parsers, runnable, level):
             add_parser_recursive(subparsers, child, level+1)
 
 
+class DAArgumentParser(argparse.ArgumentParser):
+
+    def error(self, message):
+        self.print_usage()
+        string = 'Error: '
+        if message.startswith('the following arguments are required'):
+            string += 'You must select a subassistant!'
+        else:
+            string += message
+        print(string)
+        exit(2)
