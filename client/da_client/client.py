@@ -5,6 +5,7 @@ import json
 import logging
 import socket
 import sys
+import os
 
 from da_client import exceptions, settings
 from da_client.logger import logger
@@ -32,7 +33,9 @@ class RequestFormatter(object):
         for key in [a for a in new_args.keys() if a.startswith('__') and a.endswith('__')]:
             del new_args[key]
 
-        message = {'query': {'request': 'run', 'options': {'path': path, 'arguments': new_args}}}
+        message = {'query': {'request': 'run', 'options': {'path': path,
+                                                           'pwd': os.getcwd(),
+                                                           'arguments': new_args}}}
         if args.get('__debug__'):
             message['query']['options']['loglevel'] = 'debug'
         json_message = json.dumps(message)
