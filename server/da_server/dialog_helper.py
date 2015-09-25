@@ -1,6 +1,7 @@
 import json
 
 from devassistant.command_helpers import DialogHelper
+from devassistant.logger import logger
 
 
 @DialogHelper.register_helper
@@ -44,8 +45,7 @@ class JSONDialogHelper(object):
                 if choice in cls.yesno_list:
                     return choice in cls.yes_list
                 else:
-                    print('\n'.join(sorted(package_list)))
-                    # TODO log this instead of printing
+                    logger.info('\n'.join(sorted(package_list)))
 
     @classmethod
     def _ask_for_text_or_password(cls, prompt, type, **options):
