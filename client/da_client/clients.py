@@ -52,6 +52,7 @@ class RequestFormatter(object):
     @classmethod
     def format_answer(cls, run_id, value):
         json_message = json.dumps({'answer': {'id': run_id, 'value': str(value)}})
+        logger.debug('Reply to server: {}'.format(json_message))
         return cls.format_message(json_message)
 
 class ConsoleClient(object):
