@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+
+import logging
 import sys
 
 from da_client import arguments, clients, settings
@@ -21,6 +23,13 @@ if __name__ == '__main__':
     comm_dict = vars(args[0])
     da_args = args[1]
 
+    # LOGGING
+    if comm_dict.get('comm_debug'):
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    # GET SERVER ADDRESS
     if 'tcp' in comm_dict:
         try:
             host, port = (comm_dict['tcp'] or '{}:{}'.format(settings.SOCKET_HOST, settings.SOCKET_PORT)).split(':')
@@ -32,6 +41,7 @@ if __name__ == '__main__':
         filename = comm_dict.get('unix') or settings.SOCKET_FILENAME
         client = clients.UNIXClient(filename)
 
+    # RUN
     try:
         client.start()
         sys.exit(client.run(da_args))

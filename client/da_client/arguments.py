@@ -18,7 +18,7 @@ class DAArgumentParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-def get_argument_parser(tree, add_help=True):
+def get_argument_parser(tree, add_help=True, debug=False):
     '''Generate an ArgumentParser based on the tree of assistants/actions received'''
     parser = DAArgumentParser(description='',argument_default=argparse.SUPPRESS, add_help=add_help)
     parser.add_argument('-u', '--unix',
@@ -29,14 +29,15 @@ def get_argument_parser(tree, add_help=True):
                     nargs='?',
                     metavar='HOST:PORT',
                     help='Connect to a TCP server on HOST:PORT (default: {}:{})'.format(settings.SOCKET_HOST, settings.SOCKET_PORT))
-    parser.add_argument('-d', '--debug',
-                        help='Show debug output of devassistant (may be a verbose a lot!).',
-                        action='store_true',
-                        default=False)
     parser.add_argument('-c', '--comm-debug',
                         help='Show debug output of communication with server.',
                         action='store_true',
                         default=False)
+    if debug:
+        parser.add_argument('-d', '--debug',
+                            help='Show debug output of devassistant (may be a verbose a lot!).',
+                            action='store_true',
+                            default=False)
     if len(tree) > 0:
         subparsers = parser.add_subparsers(dest='subassistant_0')
         subparsers.required = True

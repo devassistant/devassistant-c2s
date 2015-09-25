@@ -111,9 +111,9 @@ class ConsoleClient(object):
             print('Error: ' + reply['error']['reason'])
             ret = 1
         elif 'tree' in reply:
-            ap = arguments.get_argument_parser(reply['tree'])
+            ap = arguments.get_argument_parser(reply['tree'], debug=True)
             user_args = vars(ap.parse_args(server_args))
-            if user_args.get('__comm_debug__'):
+            if user_args.get('debug'):
                 logger.setLevel(logging.DEBUG)
             self.send(RequestFormatter.format_run_request(user_args))
             run_id = None
