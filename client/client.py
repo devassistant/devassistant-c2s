@@ -24,21 +24,21 @@ if __name__ == '__main__':
     da_args = args[1]
 
     # LOGGING
-    if comm_dict.get('comm_debug'):
+    if comm_dict.get('__comm_debug__'):
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
 
     # GET SERVER ADDRESS
-    if 'tcp' in comm_dict:
+    if '__tcp__' in comm_dict:
         try:
-            host, port = (comm_dict['tcp'] or '{}:{}'.format(settings.SOCKET_HOST, settings.SOCKET_PORT)).split(':')
+            host, port = (comm_dict['__tcp__'] or '{}:{}'.format(settings.SOCKET_HOST, settings.SOCKET_PORT)).split(':')
         except ValueError:
-            ap.error('Invalid TCP address: "{}", must be HOST:PORT'.format(comm_dict['tcp']))
+            ap.error('Invalid TCP address: "{}", must be HOST:PORT'.format(comm_dict['__tcp__']))
             sys.exit(2)
         client = clients.TCPClient(host=host, port=int(port))
     else:
-        filename = comm_dict.get('unix') or settings.SOCKET_FILENAME
+        filename = comm_dict.get('__unix__') or settings.SOCKET_FILENAME
         client = clients.UNIXClient(filename)
 
     # RUN
@@ -48,10 +48,10 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         sys.exit(130)
     except PermissionError:
-        ap.error('Permission denied: {}'.format(comm_dict.get('unix')))
+        ap.error('Permission denied: {}'.format(comm_dict.get('__unix__')))
         sys.exit(2)
     except FileNotFoundError:
-        ap.error('File not found: ' + comm_dict.get('unix'))
+        ap.error('File not found: ' + comm_dict.get('__unix__'))
         sys.exit(2)
     except ConnectionError as e:
         logger.error(client.format_connection_error())

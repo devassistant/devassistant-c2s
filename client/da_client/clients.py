@@ -43,7 +43,7 @@ class RequestFormatter(object):
                                                            'pwd': os.getcwd(),
                                                            'arguments': new_args}}}
         if args.get('__debug__'):
-            message['query']['options']['loglevel'] = 'debug'
+            message['query']['options']['loglevel'] = 'DEBUG'
         json_message = json.dumps(message)
         logger.debug('Query to server: {}'.format(json_message))
         return cls.format_message(json_message)
@@ -113,8 +113,6 @@ class ConsoleClient(object):
         elif 'tree' in reply:
             ap = arguments.get_argument_parser(reply['tree'], debug=True)
             user_args = vars(ap.parse_args(server_args))
-            if user_args.get('debug'):
-                logger.setLevel(logging.DEBUG)
             self.send(RequestFormatter.format_run_request(user_args))
             run_id = None
             while True:
