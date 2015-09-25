@@ -90,7 +90,7 @@ class ConsoleClient(object):
         if self.socket is None:
             raise exceptions.ClientException('Not connected')
 
-        # check if server-stop is a first non --prefixed argument
+        # check if the first non -- argument is server-stop
         if [a for a in server_args if not a.startswith('--')][0] == 'server-stop':
             self.send(RequestFormatter.format_stop_request())
             try:
@@ -109,7 +109,7 @@ class ConsoleClient(object):
             print('Error: ' + reply['error']['reason'])
             ret = 1
         elif 'tree' in reply:
-            ap = arguments.get_argument_parser(reply['tree'], first=False)
+            ap = arguments.get_argument_parser(reply['tree'], debug=True)
             user_args = vars(ap.parse_args(server_args))
             self.send(RequestFormatter.format_run_request(user_args))
             run_id = None
