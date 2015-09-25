@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import getpass
 import json
 import logging
 import socket
@@ -148,13 +149,15 @@ class ConsoleClient(object):
         return ret
 
     def handle_question(self, run_id, args):
-        print(args)
         question = args['question']
         try:
-            print(question['text'])
+            print(question['message'])
         except KeyError:
-            pass
-        reply = input(question['prompt'] + ' ')
+            pass  # some questions don't have message, just prompt
+        if question['type'] == 'password':
+            reply = getpass.getpass(question['prompt'] + ' ')
+        else:
+            reply = input(question['prompt'] + ' ')
         self.send(RequestFormatter.format_answer(run_id, reply))
 
     def handle_log(self, level, message):
