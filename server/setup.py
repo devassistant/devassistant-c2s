@@ -2,9 +2,18 @@
 # -*- coding: utf-8 -*-
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup
 except:
-    from distutils.core import setup, find_packages
+    from distutils.core import setup
+
+import re, os
+
+def find_packages(path='.'):
+    ret = []
+    for root, dirs, files in os.walk(path):
+        if '__init__.py' in files:
+            ret.append(re.sub('^[^A-z0-9_]+', '', root.replace('/', '.')))
+    return ret
 
 setup(
     name='da_server',
