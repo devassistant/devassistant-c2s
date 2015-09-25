@@ -18,7 +18,7 @@ class DAArgumentParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-def get_argument_parser(tree, add_help=True, debug=False):
+def get_argument_parser(tree, add_help=True, first=True):
     '''Generate an ArgumentParser based on the tree of assistants/actions received
 
     Note that all dests of all arguments here must be enclosed in __ so we don't
@@ -39,17 +39,20 @@ def get_argument_parser(tree, add_help=True, debug=False):
                         help='Show debug output of communication with server.',
                         action='store_true',
                         default=False)
-    if debug:
+
+    if not first:
+        # second parsing, we add parser for assistants and the debug option for server
         parser.add_argument('-d', '--debug',
                             dest='__debug__',
                             help='Show debug output of devassistant (may be a verbose a lot!).',
                             action='store_true',
                             default=False)
-    if len(tree) > 0:
-        subparsers = parser.add_subparsers(dest='subassistant_0')
-        subparsers.required = True
-        for runnable in tree:
-            add_parser_recursive(subparsers, runnable, 1)
+        if len(tree) > 0:
+            subparsers = parser.add_subparsers(dest='subassistant_0')
+            subparsers.required = True
+            for runnable in tree:
+                add_parser_recursive(subparsers, runnable, 1)
+
     return parser
 
 def add_parser_recursive(parsers, runnable, level):

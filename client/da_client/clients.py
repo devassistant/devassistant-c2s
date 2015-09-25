@@ -25,6 +25,7 @@ class RequestFormatter(object):
     @classmethod
     def format_stop_request(cls):
         json_message = json.dumps({'query': {'request': 'shutdown'}})
+        logger.debug('Query to server: {}'.format(json_message))
         return cls.format_message(json_message)
 
     @classmethod
@@ -89,11 +90,8 @@ class ConsoleClient(object):
         if self.socket is None:
             raise exceptions.ClientException('Not connected')
 
-        # Before we even parse the arguments, check if there isn't the server-stop thing
-        # It would be better to check this with argparser, but currently, argparser is constructed later
-        # As a side-effect, we cannot use --debug flags together with this :(
-        # TODO: solve the side-effect, possible use argparser as well
-        if len(sys.argv) > 1 and sys.argv[1] == 'server-stop':
+        # check if server-stop is a first non --prefixed argument
+        if [a for a in server_args if not a.startswith('--')][0] == 'server-stop':
             self.send(RequestFormatter.format_stop_request())
             try:
                 reply = json.loads(self.receive())  # this will fail when the server stopped
@@ -111,7 +109,7 @@ class ConsoleClient(object):
             print('Error: ' + reply['error']['reason'])
             ret = 1
         elif 'tree' in reply:
-            ap = arguments.get_argument_parser(reply['tree'], debug=True)
+            ap = arguments.get_argument_parser(reply['tree'], first=False)
             user_args = vars(ap.parse_args(server_args))
             self.send(RequestFormatter.format_run_request(user_args))
             run_id = None
