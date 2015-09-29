@@ -13,7 +13,7 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py
 RUN python3.4 get-pip.py
 
 COPY da_server-0.0.1.tar.gz .
-RUN pip3.4 install da_server-0.0.1.tar.gz
+RUN pip3.4 install da_server-0.0.1.tar.gz jsonschema
 RUN da pkg install nulecule
 
 RUN mkdir /cwd
