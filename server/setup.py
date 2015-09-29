@@ -25,7 +25,7 @@ setup(
     author_email='tradej@redhat.com, mhroncok@redhat.com',
     license='GPLv2+',
     packages=find_packages(),
-    install_requires=['devassistant'],
+    install_requires=['devassistant>=0.12.0a1'],
     entry_points={'console_scripts': ['da-server=da_server:run']},
     classifiers=[
         'Development Status :: 3 - Alpha',
