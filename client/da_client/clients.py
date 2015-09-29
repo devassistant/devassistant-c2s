@@ -92,7 +92,8 @@ class ConsoleClient(object):
             raise exceptions.ClientException('Not connected')
 
         # check if the first non -- argument is server-stop
-        if [a for a in server_args if not a.startswith('--')][0] == 'server-stop':
+        positional_args = [a for a in server_args if not a.startswith('--')]
+        if positional_args and positional_args[0] ==  'server-stop':
             self.send(RequestFormatter.format_stop_request())
             try:
                 reply = json.loads(self.receive())  # this will fail when the server stopped
