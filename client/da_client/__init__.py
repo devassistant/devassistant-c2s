@@ -47,10 +47,10 @@ def run():
     except KeyboardInterrupt:
         sys.exit(130)
     except PermissionError:
-        ap.error('Permission denied: {}'.format(comm_dict.get('__unix__')))
+        ap.error('Permission denied: {}' + client.filename)
         sys.exit(2)
-    except FileNotFoundError:
-        ap.error('File not found: ' + comm_dict.get('__unix__'))
+    except FileNotFoundError as e:
+        ap.error('File not found: ' + client.filename)
         sys.exit(2)
     except ConnectionError as e:
         logger.error(client.format_connection_error())
