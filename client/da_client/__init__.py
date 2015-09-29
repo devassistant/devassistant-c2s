@@ -52,7 +52,7 @@ def run():
     except FileNotFoundError as e:
         ap.error('File not found: ' + client.filename)
         sys.exit(2)
-    except ConnectionError as e:
+    except (ConnectionError, OSError) as e:
         logger.error(client.format_connection_error())
         logger.error('The message was: {}'.format(e))
         # Show help if everything fails
