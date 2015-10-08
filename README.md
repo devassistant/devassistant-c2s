@@ -9,6 +9,9 @@ directories. Each of the directories contains a `docker` directory with a
 Dockerfile that is used for building the respective CentOS-based Docker image.
 Running DA in Docker is perfectly optional.
 
+To inspect the JSON API the server and client use for communication, head over
+to [the repository with the API](https://github.com/devassistant/c2s-api).
+
 # How to Build
 
 If you wish to build the Docker images, you can use the provided `build.sh`
